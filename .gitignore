@@ -167,3 +167,4 @@ ENV/
 tmp/
 python/dnlp/data/
 python/dnlp/models/
+python/dnlp/crf/

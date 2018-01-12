@@ -54,12 +54,12 @@ class DnnCrfConfig(object):
 
 class MMTNNConfig(object):
   def __init__(self, *, skip_left: int = 2, skip_right: int = 2, character_embed_size: int = 50,
-               label_embed_size: int = 50, hidden_unit: int = 150, learning_rate: float = 0.2, lam: float = 10e-4,
+               tag_embed_size: int = 50, hidden_unit: int = 150, learning_rate: float = 0.2, lam: float = 10e-4,
                dropout_rate: float = 0.4, batch_length: int = 150, batch_size: int = 20):
     self.__skip_left = skip_left
     self.__skip_right = skip_right
     self.__character_embed_size = character_embed_size
-    self.__label_embed_size = label_embed_size
+    self.__tag_embed_size = tag_embed_size
     self.__hidden_unit = hidden_unit
     self.__learning_rate = learning_rate
     self.__lam = lam
@@ -80,8 +80,8 @@ class MMTNNConfig(object):
     return self.__character_embed_size
 
   @property
-  def label_embed_size(self):
-    return self.__label_embed_size
+  def tag_embed_size(self):
+    return self.__tag_embed_size
 
   @property
   def hidden_unit(self):

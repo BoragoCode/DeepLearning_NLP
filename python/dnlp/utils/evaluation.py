@@ -112,6 +112,7 @@ def evaluate_ner(model, data_path:str):
       if len(sentence) <= 3:
         continue
       entities, labels_predict = model.predict_ll(sentence, return_labels=True)
+      print(model.predict_ll(sentence))
       all_labels_predict.extend(labels_predict)
       all_labels_true.extend(label)
       c, p, r = get_ner_statistics(label, labels_predict)
@@ -121,6 +122,7 @@ def evaluate_ner(model, data_path:str):
     p = c_count/p_count
     r = c_count/r_count
     f1 = 2*p*r/(p+r)
+    print(c_count,p_count)
     print(p,r,f1)
 
     return fmt(p*100),fmt(r*100),fmt(f1*100)
