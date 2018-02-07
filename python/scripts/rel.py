@@ -31,8 +31,7 @@ def train_re_cnn():
     #                        remark='_skip_gram_directed')
     # train_re_cnn_by_window(w,data_path_two)
     train_re_cnn_by_window(w, data_path_two_directed, remark='_directed')
-    train_re_cnn_by_window(w, data_path_multi_directed, 28, remark='_directed')
-
+    # train_re_cnn_by_window(w, data_path_multi_directed, 28, remark='_directed')
     print(time.time() - start)
 
 
@@ -164,8 +163,8 @@ if __name__ == '__main__':
     # test_re_cnn_by_window((2,), epoch=5, embedding_path=CBOW_PATH, remark='_cbow_directed')
     # get_re_cnn_result()
     # get_re_cnn_result('multi')
-    # test_re_cnn_by_window((3,4), 8, mode='two', relation_count=2, remark='_directed')
-    test_re_cnn_by_window((3, 4), 8, mode='multi', relation_count=28, remark='_directed')
+    test_re_cnn_by_window((2,), 12, mode='two', relation_count=2, remark='_directed')
+    # test_re_cnn_by_window((3, 4), 8, mode='multi', relation_count=28, remark='_directed')
     # test_re_cnn(remark='_directed')
     # test_re_cnn('multi')
     # test_re_cnn_with_embedding()

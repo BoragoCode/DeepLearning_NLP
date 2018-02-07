@@ -11,7 +11,7 @@ class RECNN(RECNNBase):
                data_path: str = '', relation_count: int = 2, model_path: str = '', embedding_path: str = '',
                remark: str = '', data_mode='prefetch'):
     tf.reset_default_graph()
-    RECNNBase.__init__(self, config, dict_path,mode=mode)
+    RECNNBase.__init__(self, config, dict_path, mode=mode)
     self.dtype = dtype
     self.mode = mode
     self.data_path = data_path
@@ -74,11 +74,20 @@ class RECNN(RECNNBase):
     self.regularization = tf.contrib.layers.apply_regularization(tf.contrib.layers.l2_regularizer(self.lam),
                                                                  self.params)
     self.loss = tf.reduce_sum(tf.square(self.output - self.input_relation)) / self.batch_size + self.regularization
+    self.alpha = [0.5,0.5]
+    self.exp = 1.5
+    self.sm_output = tf.nn.softmax(self.output)
+    # self.facol_loss = tf.matmul(self.input_relation,
+    #                             tf.multiply(tf.log(self.sm_output), tf.pow(1 - self.sm_output, self.exp))) + tf.matmul(
+    #   1 - self.input_relation, tf.multiply(tf.pow(self.sm_output, self.exp), tf.log(1 - self.sm_output)))
+    # self.facol_loss = -self.facol_loss / self.batch_size + self.regularization
+    self.facol_loss = self.get_facol_loss()
     self.cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=self.input_relation,
                                                                  logits=self.output_no_softmax) + self.regularization
-    # self.optimizer = tf.train.GradientDescentOptimizer(self.learning_rate)
-    self.optimizer = tf.train.AdagradOptimizer(self.learning_rate)
+    self.optimizer = tf.train.GradientDescentOptimizer(self.learning_rate)
+    # self.optimizer = tf.train.AdagradOptimizer(self.learning_rate)
     self.train_model = self.optimizer.minimize(self.loss)
+    self.train_model_with_facol = self.optimizer.minimize(self.facol_loss)
     self.train_cross_entropy_model = self.optimizer.minimize(self.cross_entropy)
 
   def get_conv_kernel(self):
@@ -112,7 +121,12 @@ class RECNN(RECNNBase):
   def max_pooling(self, x, window_size):
     return tf.nn.max_pool(x, ksize=[1, self.batch_length - window_size + 1, 1, 1],
                           strides=[1, 1, 1, 1], padding='VALID')
-
+  def get_facol_loss(self):
+    loss = 0
+    for i in range(self.relation_count):
+      y_pred = self.sm_output[:,i]
+      loss+= tf.tensordot(self.input_relation[:,i],tf.pow(1-y_pred,tf.log(y_pred)),1)
+    return -loss/self.batch_size+self.regularization
   def fit(self, epochs=50, interval=5):
     with tf.Session() as sess:
       tf.global_variables_initializer().run()
@@ -131,7 +145,11 @@ class RECNN(RECNNBase):
                                                             self.primary_embed_holder: primary_embeds,
                                                             self.secondary_embed_holder: secondary_embeds})
           # sess.run(self.train_model, feed_dict={self.input: input, self.input_relation: batch['label']})
-          sess.run(self.train_cross_entropy_model, feed_dict={self.input: input, self.input_relation: labels})
+          if self.relation_count == 28:
+            sess.run(self.train_cross_entropy_model, feed_dict={self.input: input, self.input_relation: labels})
+          else:
+            sess.run(self.train_cross_entropy_model, feed_dict={self.input: input, self.input_relation: labels})
+            # sess.run(self.train_model_with_facol, feed_dict={self.input: input, self.input_relation: labels})
         if i % interval == 0:
           if self.relation_count == 2:
             model_name = '../dnlp/models/re_{2}/{0}-{1}{3}.ckpt'.format(i, '_'.join(map(str, self.window_size)),

@@ -51,16 +51,16 @@ def get_ner_statistics(correct_labels, predict_labels) -> (int, int, int):
   predict_start = 0
 
   for i, (correct_label, predict_label) in enumerate(zip(correct_labels, predict_labels)):
-    if correct_label == TAG_BEGIN:
+    if correct_label[0] == TAG_BEGIN:
       correct_start = i
       corrects[correct_start] = correct_start
-    elif correct_label == TAG_INSIDE:
+    elif correct_label[0] == TAG_INSIDE:
       corrects[correct_start] = i
 
-    if predict_label == TAG_BEGIN:
+    if predict_label[0] == TAG_BEGIN:
       predict_start = i
       predicts[predict_start] = predict_start
-    elif predict_label == TAG_INSIDE:
+    elif predict_label[0] == TAG_INSIDE:
       predicts[predict_start] = i
 
   for predict in predicts:

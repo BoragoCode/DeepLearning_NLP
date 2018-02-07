@@ -5,7 +5,7 @@ import pickle
 import random
 import json
 import pprint
-from collections import OrderedDict
+from collections import OrderedDict,Counter
 from itertools import chain
 from dnlp.utils.constant import UNK
 
@@ -60,6 +60,7 @@ class ProcessEMR(object):
     self.data = self.read_file()
     self.export()
     self.save_data()
+    self.get_entity_type_dictionary()
 
   def statistics(self):
     true_count = 0
@@ -71,11 +72,46 @@ class ProcessEMR(object):
     print(false_count / all_count)
     print(all_count)
 
+  def get_entity_type_dictionary(self):
+    type_dict = {}
+    conflict = {}
+    for annotation in self.annotations:
+      entities  = annotation['entities'].values()
+      for entity in entities:
+        text = entity['text']
+        entity_type = entity['type']
+        not_key = set(type_dict).difference([entity_type])
+        entity_conflict = [i for i in not_key if text in type_dict[i]]
+        # print(not_key)
+        if len(entity_conflict):
+          # print(text, entity_conflict,entity_type)
+          if not conflict.get(text):
+            conflict[text] = entity_conflict+[entity_type]
+          else:
+            conflict[text].append(entity_type)
+          # print('fuck')
+        if not type_dict.get(entity_type):
+          type_dict[entity_type] = [text]
+        else:
+          type_dict[entity_type].append(text)
+
+    conflict = {c:Counter(conflict[c]) for c in conflict}
+    for text, conflict_counter in conflict.items():
+      type_name,_ = conflict_counter.most_common(1)[0]
+      [type_dict[t].remove(text) for t in set(conflict_counter).difference([type_name])]
+    new_type_dict = {text:t for t, v in type_dict.items() for text in v}
+    with open(self.base_folder+'type_dict.pickle','wb') as f:
+      pickle.dump(new_type_dict,f)
+    print(new_type_dict)
+    # print(type_dict)
+    # print(conflict)
+
   def read_file(self):
     data = {}
     for f in self.files:
       file_data = {'entities': {}, 'relations': {}}
-      with open(self.data_folder + 'train/' + f + '.ann', encoding='utf-8') as f:
+      subfolder ='train/' if self.mode == 'train' else 'test/'
+      with open(self.data_folder + subfolder + f + '.ann', encoding='utf-8') as f:
         entries = [l.split('\t') for l in f.read().splitlines() if l]
         for entry in entries:
           idx = entry[0]
